@@ -17,7 +17,15 @@
 <p>
 	A Spark application utilizes a <b>driver program</b> that runs the main function. The driver also
 	coordinates the parallel efforts of the child programs on the cluster. Each individual node on the cluster
-	
+	consists of multiple <b>resilient distributed datasets</b> (RDDs) that are the foundation of Spark (which 
+	we will discuss in greater detail). Simply put, RDDs enable users to parallelize their driver program, or
+	run operations on an external dataset (of which anything using a Hadoop InputFormat is supported). The user
+	can also specify that an RDD persist in memory, which greatly speeds up its parallel processing (assuming
+	the memory is large enough to accommodate the RDD). They are also very fault tolerant, which is a key 
+	feature for any distributed computing system (as we have already established with MapReduce).
+</p>
+<p>
+	Spark also uses <b>shared variables</b> that can be accessed from the different 
 </p>
 
 <h2>Setup</h2>
