@@ -11,8 +11,8 @@
 
 <h2>Introduction</h2>
 <p>
-	Spark is a relatively new, general-purpose cluster computing software system. It has APIs 
-    in Java, Scala, and Python, allowing for a wide range of options in terms of programming languages.
+	Spark is a relatively new, general-purpose cluster computing software system. It has APIs in Java, Scala, 
+	and Python, allowing for a wide range of options in terms of programming languages.
 </p>
 <p>
 	A Spark application utilizes a <b>driver program</b> that runs the main function. The driver also
@@ -25,12 +25,26 @@
 	feature for any distributed computing system (as we have already established with MapReduce).
 </p>
 <p>
-	Spark also uses <b>shared variables</b> that can be accessed from the different 
+	Spark also uses <b>shared variables</b> that can be accessed from the different nodes. Normally, local 
+	variables in a parallelized function are copied over onto the different nodes. On certain occasions, 
+	special shared variables may greatly optimize a parallel operation. These come in two flavors:
+	<ol>
+		<li>
+			<b>Broadcast Variables:</b> These are variables that are cached in memory on each node that uses it.
+			As they are read-only, there is no need to worry about data mismatchs between the different copies
+			over a period of time.
+		</li>
+		<li>
+			<b>Accumulators:</b> These are variables that will only ever increase in value. This makes it simple 
+			to write to from the cluster nodes, as they never need to confirm the original value before writing 
+			to it. Only the driver program is able to read the accumulated value.
+		</li>
+	</ol>
 </p>
 
 <h2>Setup</h2>
 <p>
-	Simply go to the <a href="http://spark.apache.org/downloads.html"> Spark Page </a>, where you will
+	Simply go to the <a href="http://spark.apache.org/downloads.html"> Spark Page</a>, where you will
 	find many different options for downloading the system.
 </p>
 <p>
