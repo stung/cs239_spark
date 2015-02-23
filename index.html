@@ -2,92 +2,127 @@
 <html>
 <head>
 <!--<script src="jquery-1.11.2.min.js"></script><script src="headingClicks.js"></script>-->
-<title>Spark Tutorial</title>
+	<title>Spark Tutorial</title>
+	<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 <h1><img src="spark-logo.png" alt="Spark Logo" style="width:150px;height:100px"> Tutorial</h1>
 <p>Demo demo demo things</p>
 
-<h2>Introduction</h2>
-<p>
-	Spark is a relatively new, general-purpose cluster computing software system. It has APIs in Java, Scala, 
-	and Python, allowing for a wide range of options in terms of programming languages.
-</p>
-<p>
-	A Spark application utilizes a <b>driver program</b> that runs the main function. The driver also
-	coordinates the parallel efforts of the child programs on the cluster. Each individual node on the cluster
-	consists of multiple <b>resilient distributed datasets</b> (RDDs) that are the foundation of Spark (which 
-	we will discuss in greater detail). Simply put, RDDs enable users to parallelize their driver program, or
-	run operations on an external dataset (of which anything using a Hadoop InputFormat is supported). The user
-	can also specify that an RDD persist in memory, which greatly speeds up its parallel processing (assuming
-	the memory is large enough to accommodate the RDD). They are also very fault tolerant, which is a key 
-	feature for any distributed computing system (as we have already established with MapReduce).
-</p>
-<p>
-	Spark also uses <b>shared variables</b> that can be accessed from the different nodes. Normally, local 
-	variables in a parallelized function are copied over onto the different nodes. On certain occasions, 
-	special shared variables may greatly optimize a parallel operation. These come in two flavors:
-	<ol>
-		<li>
-			<b>Broadcast Variables:</b> These are variables that are cached in memory on each node that uses it.
-			As they are read-only, there is no need to worry about data mismatchs between the different copies
-			over a period of time. This will also ensure that new nodes will receive the same value if more nodes
-			are required for the driver.
-		</li>
-		<li>
-			<b>Accumulators:</b> These are variables that will only ever increase in value. This makes it simple 
-			to write to from the cluster nodes, as they never need to confirm the original value before writing 
-			to it. Only the driver program is able to read the accumulated value.
-		</li>
-	</ol>
-</p>
-<p>
-	Deployment to a cluster is typically accomplished by packaging the program into a JAR file (when using Java 
-	or Scala), then submitting it using the <code>./bin/spark-submit</code> script.
-</p>
+<div class="header">
+	<h2>Introduction</h2>
+</div>
 
-<h2>Setup</h2>
-<p>
-	Simply go to the <a href="http://spark.apache.org/downloads.html"> Spark Page</a>, where you will find many 
-	different options for downloading the system.
-</p>
-<p>
-	We ultimately decided to pick a pre-built version of Spark, though the source code is also readily available 
-	for a user to build on their own.
-</p>
-<p>
-	Troubleshooting: Spark may not run if
-</p>
+<div class="section">
+	<p>
+		Spark is a relatively new, general-purpose cluster computing software system. It has APIs in Java, Scala, 
+		and Python, allowing for a wide range of options in terms of programming languages.
+	</p>
+	<p>
+		A Spark application utilizes a <b>driver program</b> that runs the main function. The driver also
+		coordinates the parallel efforts of the child programs on the cluster. Each individual node on the cluster
+		consists of multiple <b>resilient distributed datasets</b> (RDDs) that are the foundation of Spark (which 
+		we will discuss in greater detail). Simply put, RDDs enable users to parallelize their driver program, or
+		run operations on an external dataset (of which anything using a Hadoop InputFormat is supported). The user
+		can also specify that an RDD persist in memory, which greatly speeds up its parallel processing (assuming
+		the memory is large enough to accommodate the RDD). They are also very fault tolerant, which is a key 
+		feature for any distributed computing system (as we have already established with MapReduce).
+	</p>
+	<p>
+		Spark also uses <b>shared variables</b> that can be accessed from the different nodes. Normally, local 
+		variables in a parallelized function are copied over onto the different nodes. On certain occasions, 
+		special shared variables may greatly optimize a parallel operation. These come in two flavors:
+		<ol>
+			<li>
+				<b>Broadcast Variables:</b> These are variables that are cached in memory on each node that uses it.
+				As they are read-only, there is no need to worry about data mismatchs between the different copies
+				over a period of time. This will also ensure that new nodes will receive the same value if more nodes
+				are required for the driver.
+			</li>
+			<li>
+				<b>Accumulators:</b> These are variables that will only ever increase in value. This makes it simple 
+				to write to from the cluster nodes, as they never need to confirm the original value before writing 
+				to it. Only the driver program is able to read the accumulated value.
+			</li>
+		</ol>
+	</p>
+	<p>
+		Deployment to a cluster is typically accomplished by packaging the program into a JAR file (when using Java 
+		or Scala), then submitting it using the <code>./bin/spark-submit</code> script.
+	</p>
+</div>
 
-<h2>Resilient Distributed Datasets (RDDs)</h2>
-<p>
-	As mentioned before, Spark is implemented on top of RDDs.
-</p>
-<p>
-	There are two kinds of operations one can perform on RDDs. The first is a <b>transformation</b>, which modifies
-	an existing dataset, and the second is an <b>action</b>, which will compute a value from a dataset and return 
-	it to the driver program. The classic transformation and action example would be <code>map</code> and 
-	<code>reduce</code>: <code>map</code> takes a function and applies it to every element in a dataset, which is how 
-	a transformation works. <code>reduce</code> takes a dataset and aggregates it through a function - this is 
-	analogous to how an action operates and passes its value on to the driver program.
-</p>
-<p>
-	Transformations in Spark are <b>lazy</b>, which means that they 
+<div class="header">
+	<h2>Setup</h2>
+</div>
 
-<h2>MapReduce</h2>
+<div class="section">
+	<p>
+		Simply go to the <a href="http://spark.apache.org/downloads.html"> Spark Page</a>, where you will find many 
+		different options for downloading the system.
+	</p>
+	<p>
+		We ultimately decided to pick a pre-built version of Spark, though the source code is also readily available 
+		for a user to build on their own.
+	</p>
+	<p>
+		Troubleshooting: Spark may not run if
+	</p>
+</div>
 
-<h2>WordCount</h2>
+<div class="header">
+	<h2>Resilient Distributed Datasets (RDDs)</h2>
+</div>
 
-<h2>PiEstimator</h2>
+<div class="section">
+	<p>
+		As mentioned before, Spark is implemented on top of RDDs.
+	</p>
+	<h3>RDD Operations</h3>
+	<p>
+		There are two kinds of operations one can perform on RDDs. The first is a <b>transformation</b>, which modifies
+		an existing dataset, and the second is an <b>action</b>, which will compute a value from a dataset and return 
+		it to the driver program. The classic transformation and action example would be <code>map</code> and 
+		<code>reduce</code>: <code>map</code> takes a function and applies it to every element in a dataset, which is how 
+		a transformation works. <code>reduce</code> takes a dataset and aggregates it through a function - this is 
+		analogous to how an action operates and passes its value on to the driver program.
+	</p>
+	<p>
+		Transformations in Spark are <b>lazy</b>, which means that the dataset is not modified by the transformations
+		immediately. The transformation sequence is saved and only applied when an action requests the value for the
+		driver program.
+	</p>
+</div>
 
-<h2>PageRank</h2>
+<div class="header">
+	<h2>MapReduce</h2>
+</div>
 
-<h2>SparkSQL</h2>
+<div class="header">
+	<h2>WordCount</h2>
+</div>
 
-<h2>Spark vs Hadoop</h2>
-<p>Hadoop is Hadoopy.</p>
-<p>More comparisons from the Spark paper</p>
+<div class="header">
+	<h2>PiEstimator</h2>
+</div>
+
+<div class="header">
+	<h2>PageRank</h2>
+</div>
+
+<div class="header">
+	<h2>SparkSQL</h2>
+</div>
+
+<div class="header">
+	<h2>Spark vs Hadoop</h2>
+</div>
+
+<div class="section">
+	<p>Hadoop is Hadoopy.</p>
+	<p>More comparisons from the Spark paper</p>
+</div>
 
 
 </body>
