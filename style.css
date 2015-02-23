@@ -1,13 +1,16 @@
 <style>
-.header {
-    text-align:center;
-    padding:10px;
-    float:center;
+h2.header {
+    float: left;
+    padding:5px;
+    left: 0;
 }
 
 .section {
     width:1000px;
-    float:center;
     padding:10px; 
+}
+
+#bodyStyle{
+	/*left: 200;*/
 }
 </style>
