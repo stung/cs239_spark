@@ -110,9 +110,12 @@
 			immediately. The transformation sequence is saved and only applied when an action requests the value for the
 			driver program.
 		</p>
-		<h3>RDD Limitations</h3>
 		<p>
-			Though RDDs can be generalized to address a wide range of parallelized problems,
+			Though RDDs can be generalized to address a wide range of parallelized problems, it is also because most distributed
+			systems today follow a MapReduce-type of framework, in which one function is applied over a large batch of elements.
+			In the event that fine grained updates are required, RDDs would no longer be a practical choice. An example of such 
+			include a storage system over multiple users for a web app, in which it would not be practical to assume that every 
+			user would enjoy having the contents of their storage modified to match everyone else's.
 		</p>
 	</div>
 
