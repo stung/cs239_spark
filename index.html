@@ -62,7 +62,8 @@
 		</p>
 		<p>
 			We ultimately decided to pick a pre-built version of Spark, though the source code is also readily available 
-			for a user to build on their own.
+			for a user to build on their own. This choice was made primarily to save on setup overhead, and we were able 
+			to start playing around with the Scala shell right away just by downloading the first pre-built option.
 		</p>
 		<p>
 			Troubleshooting: Spark may not run if
@@ -73,7 +74,27 @@
 
 	<div class="section">
 		<p>
-			As mentioned before, Spark is implemented on top of RDDs.
+			As mentioned before, Spark is implemented on top of RDDs. These RDDs are key to understanding how Spark is able
+			to claim more efficient memory management while still performing as well as the other big distributed systems.
+			The basic idea is that RDDs keep track of coarse-grained transformations that have been applied to it, rather
+			than fine-grained operations to its shared state. That is to say, a fine-grained operation would involve updating
+			specific cells in a shared table, which would involve propagating this change across all other nodes that use it
+			so that it can be recovered in the event of failure. A coarse-grained approach involves using one operation to
+			update most, if not all, elements. This allows the driver to simply keep track of all transformations utilized
+			over time, allowing an RDD to easily rebuild from failure by checking other RDDs. In spite of this potential 
+			loss of generality, RDDs are still very powerful and flexible enough to handle the majority of parallelizable 
+			computations.
+		</p>
+		<p>
+			Formally speaking, an RDD is actually immutable - any modifications to an RDD are actually a result of a
+			transformation creating a new RDD after running a function through a group of elements in the old one. In fact,
+			RDDs may not even need to stay in memory. It keeps track of how it was derived from other data through the
+			aforementioned transformations, known as its <b>lineage</b>, and is able to compute specific partitions of itself
+			on the fly. The user can also specify which RDDs may be queried more often, and therefore should be stored in
+			memory instead of being represented as a series of transformations. This is known as <b>persistence</b>, which
+			greatly speeds up execution if a user knows beforehand that a certain dataset will be referenced multiple times.
+			An RDD can also be <b>partitioned</b> across multiple machines, which is another aspect of RDDs that can be set by
+			the user.
 		</p>
 		<h3>RDD Operations</h3>
 		<p>
@@ -88,6 +109,10 @@
 			Transformations in Spark are <b>lazy</b>, which means that the dataset is not modified by the transformations
 			immediately. The transformation sequence is saved and only applied when an action requests the value for the
 			driver program.
+		</p>
+		<h3>RDD Limitations</h3>
+		<p>
+			Though RDDs can be generalized to address a wide range of parallelized problems,
 		</p>
 	</div>
 
