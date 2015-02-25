@@ -57,17 +57,39 @@
 
 	<div class="section">
 		<p>
-			Simply go to the <a href="http://spark.apache.org/downloads.html"> Spark Page</a>, where you will find many 
-			different options for downloading the system.
-		</p>
-		<p>
-			We ultimately decided to pick a pre-built version of Spark, though the source code is also readily available 
-			for a user to build on their own. This choice was made primarily to save on setup overhead, and we were able 
-			to start playing around with the Scala shell right away just by downloading the first pre-built option.
-		</p>
-		<p>
-			Troubleshooting: Spark may not run if
-		</p>
+There are two basic ways to set up a Spark environment: pre-built or source code.
+</p>
+<p>
+<b>Download</b><br />
+To download Spark, visit <a href="http://spark.apache.org/downloads.html">http://spark.apache.org/downloads.html</a>
+</p>
+<p>
+<b>Pre-Built</b><br />
+Select a pre-built package from the download section, and download.<br />
+</p>
+<p>
+<b>Source Code</b><br />
+After downloading the source code, run<br />
+<pre><code>export MAVEN_OPTS="-Xmx2g -XX:MaxPermSize=512M -XX:ReservedCodeCacheSize=512m"
+</code></pre>
+This will increase the max maven memory to allow building the source.<br /><br />
+Then run the build by executing the code<br />
+<pre><code>mvn -DskipTests clean package
+</code></pre>
+This will take a while to complete.
+</p>
+<p>
+<b>Test Environment</b><br />
+After the build is successful, you may test your environment by running<br />
+<pre><code>./bin/run-example SparkPi 10
+</code></pre>
+</p>
+<p>
+<b>Keep in mind</b><br />
+Spark build is best when using scala 2.10.X<br />
+The latest scala will cause complications and may not build.<br />
+Also, building Spark requires Maven and Java.
+</p>
 	</div>
 
 	<h2 class="header">Resilient Distributed Datasets (RDDs)</h2>
@@ -120,15 +142,132 @@
 	</div>
 
 	<div class="header">
-		<h2>MapReduce</h2>
+		<h2>A Little About Spark Map, Reduce, and Filter</h2>
 	</div>
 
 	<div class="header">
-		<h2>WordCount</h2>
+		<h2>Spark Shell And WordCount</h2>
 	</div>
 
 	<div class="header">
-		<h2>PiEstimator</h2>
+		<h2>App Deployment and PiEstimator</h2>
+	</div>
+	<div class="section">
+<h3>App Deployment</h3>
+<p>
+Now that we know how to use Spark with the shell, it's useful to look at a way to deploy a Spark application which can be reused. We will use Spark's "SimpleApp" to demonstrate.
+</p>
+<p>
+<pre><code>
+/* SimpleApp.scala */
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkContext._
+import org.apache.spark.SparkConf
+
+object SimpleApp {
+  def main(args: Array[String]) {
+    val logFile = "README.md" // Should be some file on your system
+    val conf = new SparkConf().setAppName("Simple Application")
+    val sc = new SparkContext(conf)
+    val logData = sc.textFile(logFile, 2).cache()
+    val numAs = logData.filter(line => line.contains("a")).count()
+    val numBs = logData.filter(line => line.contains("b")).count()
+    println("Lines with a: %s, Lines with b: %s".format(numAs, numBs))
+  }
+}
+</code></pre>
+</p>
+<p>
+You can use any text file, and this application will count the number of As and the number of Bs in the file.
+</p>
+<p>
+SparkConf is a configuration requirement to make sure that the application will be using Spark. To create the sbt configuration file, simple.sbt, use the following:
+</p>
+<p>
+<pre><code>
+name := "Simple Project"
+
+version := "1.0"
+
+scalaVersion := "2.10.4"
+
+libraryDependencies += "org.apache.spark" %% "spark-core" % "1.2.0"
+</code></pre>
+</p>
+<p>
+Finally, the following steps will deploy and run the application.<br />
+<pre><code>
+# Your directory layout should look like this
+$ find .
+.
+./simple.sbt
+./src
+./src/main
+./src/main/scala
+./src/main/scala/SimpleApp.scala
+
+# Package a jar containing your application
+$ sbt package
+...
+[info] Packaging {..}/{..}/target/scala-2.10/simple-project_2.10-1.0.jar
+
+# Use spark-submit to run your application
+$ YOUR_SPARK_HOME/bin/spark-submit \
+  --class "SimpleApp" \
+  --master local[4] \
+  target/scala-2.10/simple-project_2.10-1.0.jar
+...
+Lines with a: 46, Lines with b: 23
+</code></pre>
+</p>
+
+<h3>Pi Estimator</h3>
+<p>
+Spark comes with a sample pi estimator to demonstrate and to test your Spark environment.
+</p>
+<p>
+Take a look at the sample code.
+</p>
+<pre><code>
+package org.apache.spark.examples
+import scala.math.random
+import org.apache.spark._
+
+object SparkPi {
+def main(args: Array[String]) {
+val conf = new SparkConf().setAppName("Spark Pi")
+val spark = new SparkContext(conf)
+val slices = if (args.length > 0) args(0).toInt else 2
+val n = math.min(100000L * slices, Int.MaxValue).toInt // avoid overflow
+val count = spark.parallelize(1 until n, slices).map { i =>
+val x = random * 2 - 1
+val y = random * 2 - 1
+if (x*x + y*y < 1) 1 else 0
+}.reduce(_ + _)
+println("Pi is roughly " + 4.0 * count / n)
+spark.stop()
+}
+}
+</code></pre>
+</p>
+<p>
+<i>Spark supports Python, Java, and Scala. But we will be using Scala throughout our tutorial. </i>
+</p>
+<p>
+From this example, you can see that Spark supports standard library imports. This is also true for Java. For this Pi Estimator, the math library has been imported.
+</p>
+<p>
+Diving into the code, the first two objects created are the configuration and the spark context. The Spark context is the object to use to perform Spark functions.
+</p>
+<p>
+As you can see, scala allows for a Javascript style chaining of functions. And you can get a list of actions and transformations in the API or find the most frequently used actions and transformations in the programming guide <a href="http://spark.apache.org/docs/1.2.0/programming-guide.html">here</a>.
+</p>
+<p>
+The parallelize transformation takes the given data and prepares it for parallel operation on the cluster.
+</p>
+<p>
+Finally, the map and reduce algorithms are applied, and the result is printed.
+</p>
 	</div>
 
 	<div class="header">
