@@ -132,6 +132,20 @@ Also, building Spark requires Maven and Java.
 			immediately. The transformation sequence is saved and only applied when an action requests the value for the
 			driver program.
 		</p>
+		
+		<h3>RDD Advantages</h3>
+		<p>
+			<img src="rddVSdsm.png" alt="Table 1" style="width:450px;height:350px">
+		</p>
+		<p>
+			Table 1 lists out a quick summary of how an RDD-based system stacks up with a generic Distributed Shared Memory 
+			(DSM) system. Most importantly, it shows how the fault tolerance of RDDs can be so much more efficient than that 
+			of a DSM by using lineage to track its RDDs. This prevents the necessity of periodic checkpoints and required 
+			full-system rollbacks when critical nodes fail, which are typical fault recovery methods for DSMs. In addition,
+			RDDs are capable of running extra copies of slow tasks, similar to how MapReduce deals with stragglers. In DSM, 
+			two copies of the same task would be accessing the same memory locations, creating contention and potential data
+			inconsistencies across the board.
+		</p>
 		<p>
 			Though RDDs can be generalized to address a wide range of parallelized problems, it is also because most distributed
 			systems today follow a MapReduce-type of framework, in which one function is applied over a large batch of elements.
@@ -275,16 +289,57 @@ Finally, the map and reduce algorithms are applied, and the result is printed.
 	</div>
 
 	<div class="header">
-		<h2>SparkSQL</h2>
-	</div>
-
-	<div class="header">
-		<h2>Spark vs Hadoop</h2>
+		<h2>How Spark Stacks Up</h2>
 	</div>
 
 	<div class="section">
-		<p>Hadoop is Hadoopy.</p>
-		<p>More comparisons from the Spark paper</p>
+		<p>
+			RDDs were first proposed in a paper published by UC Berkeley. There, they describe how they implements these 
+			resilient datasets on top of Spark, which have now become an integral part of Spark itself. The researchers were 
+			also able to show that Spark can run up to 20 times faster than Hadoop for certain iterative applications, and can 
+			scan a 1 TB dataset wth only 5 - 7 seconds of latency. Fault recovery was noticeably efficient, as Spark is able to
+			recover just by building the failed partitions. Specific examples are as follow:
+		</p>
+		<h3>Iterative Machine Learning Algorithm Evaluation</h3>
+		<p>
+			The authors compared their RDDs in Spark against the standard Hadoop and a Hadoop deployment known as HadoopBinMem 
+			(which converts text data into binary after the initial iteration). They implemented two such machine learning 
+			algorithms, one for a logistic regression and the other for k-means. Dataset sizes were 100 GB on clusters of 25 - 
+			100 machines. While the k-means algorithm involves a lot of computation, the regression is more sensitive to I/O and
+			other kinds of overhead. These are qualities that will be taken into consideration when evaluating the results.
+		</p>
+		<p>
+			<img src="iterCompare.png" alt="Iteration Comparisons" style="width:450px;height:250px">
+		</p>
+		<p>
+			This graph depicts the time difference between the initial iteration of each system and the average of subsequent 
+			iterations thereafter.
+		</p>
+		<p>
+			<img src="clusterSize.png" alt="Cluster Size Comparisons" style="width:450px;height:250px">
+		</p>
+		<p>
+			This graph only shows the average running time of the subsequent iterations, but compares the performance of each
+			one over the different numbers of machines used.
+		</p>
+		<h3>Fault Recovery Evaluation</h3>
+		<p>
+			<img src="failGraph.png" alt="Failure Graph" style="width:400px;height:200px">
+		</p>
+		<p>
+			To test how Spark performed in the event of failure, the authors introduced a failure in the 6th iteration when 
+			running the k-means algorithm. The graph shows that while Spark did have to compensate for the sudden failure,
+			it was able to recover within a meaningful amount of time and continue the successive iterations with no problem.
+			This is because the other machines were able to reconstruct the downed RDD through its lineage, and did not have
+			to resort to rolling back to a previous state and restarting several iterations (as would typically be the case 
+			for a checkpoint-based fault tolerance mechanism, depending on how often checkpoints were made).
+		</p>
+
+		<p>
+			The paper and all the relevant figures used in this tutorial can be found 
+			<a href="https://www.cs.berkeley.edu/~matei/papers/2012/nsdi_spark.pdf">here</a>. Further examples and implementation
+			details are also found in that paper.
+		</p>
 	</div>
 
 </div>
