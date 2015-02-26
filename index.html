@@ -25,8 +25,8 @@
 			consists of multiple <b>resilient distributed datasets</b> (RDDs) that are the foundation of Spark (which 
 			we will discuss in greater detail). Simply put, RDDs enable users to parallelize their driver program, or
 			run operations on an external dataset (of which anything using a Hadoop InputFormat is supported). The user
-			can also specify that an RDD persist in memory, which greatly speeds up its parallel processing (assuming
-			the memory is large enough to accommodate the RDD). They are also very fault tolerant, which is a key 
+			can also specify that an RDD persists in memory, which greatly speeds up its parallel processing (assuming
+			the memory is large enough to accommodate the RDD). They are also fault tolerant, which is a key 
 			feature for any distributed computing system (as we have already established with MapReduce).
 		</p>
 		<p>
@@ -92,68 +92,7 @@ Also, building Spark requires Maven and Java.
 </p>
 	</div>
 
-	<h2 class="header">Resilient Distributed Datasets (RDDs)</h2>
-
-	<div class="section">
-		<p>
-			As mentioned before, Spark is implemented on top of RDDs. These RDDs are key to understanding how Spark is able
-			to claim more efficient memory management while still performing as well as the other big distributed systems.
-			The basic idea is that RDDs keep track of coarse-grained transformations that have been applied to it, rather
-			than fine-grained operations to its shared state. That is to say, a fine-grained operation would involve updating
-			specific cells in a shared table, which would involve propagating this change across all other nodes that use it
-			so that it can be recovered in the event of failure. A coarse-grained approach involves using one operation to
-			update most, if not all, elements. This allows the driver to simply keep track of all transformations utilized
-			over time, allowing an RDD to easily rebuild from failure by checking other RDDs. In spite of this potential 
-			loss of generality, RDDs are still very powerful and flexible enough to handle the majority of parallelizable 
-			computations.
-		</p>
-		<p>
-			Formally speaking, an RDD is actually immutable - any modifications to an RDD are actually a result of a
-			transformation creating a new RDD after running a function through a group of elements in the old one. In fact,
-			RDDs may not even need to stay in memory. It keeps track of how it was derived from other data through the
-			aforementioned transformations, known as its <b>lineage</b>, and is able to compute specific partitions of itself
-			on the fly. The user can also specify which RDDs may be queried more often, and therefore should be stored in
-			memory instead of being represented as a series of transformations. This is known as <b>persistence</b>, which
-			greatly speeds up execution if a user knows beforehand that a certain dataset will be referenced multiple times.
-			An RDD can also be <b>partitioned</b> across multiple machines, which is another aspect of RDDs that can be set by
-			the user.
-		</p>
-		<h3>RDD Operations</h3>
-		<p>
-			There are two kinds of operations one can perform on RDDs. The first is a <b>transformation</b>, which modifies
-			an existing dataset, and the second is an <b>action</b>, which will compute a value from a dataset and return 
-			it to the driver program. The classic transformation and action example would be <code>map</code> and 
-			<code>reduce</code>: <code>map</code> takes a function and applies it to every element in a dataset, which is how 
-			a transformation works. <code>reduce</code> takes a dataset and aggregates it through a function - this is 
-			analogous to how an action operates and passes its value on to the driver program.
-		</p>
-		<p>
-			Transformations in Spark are <b>lazy</b>, which means that the dataset is not modified by the transformations
-			immediately. The transformation sequence is saved and only applied when an action requests the value for the
-			driver program.
-		</p>
-		
-		<h3>RDD Advantages</h3>
-		<p>
-			<img src="rddVSdsm.png" alt="Table 1" style="width:450px;height:350px">
-		</p>
-		<p>
-			Table 1 lists out a quick summary of how an RDD-based system stacks up with a generic Distributed Shared Memory 
-			(DSM) system. Most importantly, it shows how the fault tolerance of RDDs can be so much more efficient than that 
-			of a DSM by using lineage to track its RDDs. This prevents the necessity of periodic checkpoints and required 
-			full-system rollbacks when critical nodes fail, which are typical fault recovery methods for DSMs. In addition,
-			RDDs are capable of running extra copies of slow tasks, similar to how MapReduce deals with stragglers. In DSM, 
-			two copies of the same task would be accessing the same memory locations, creating contention and potential data
-			inconsistencies across the board.
-		</p>
-		<p>
-			Though RDDs can be generalized to address a wide range of parallelized problems, it is also because most distributed
-			systems today follow a MapReduce-type of framework, in which one function is applied over a large batch of elements.
-			In the event that fine grained updates are required, RDDs would no longer be a practical choice. An example of such 
-			include a storage system over multiple users for a web app, in which it would not be practical to assume that every 
-			user would enjoy having the contents of their storage modified to match everyone else's.
-		</p>
-	</div>
+	
 
 	<div class="header">
 		<h2>A Little About Spark Map, Reduce, and Filter</h2>
@@ -286,6 +225,69 @@ Finally, the map and reduce algorithms are applied, and the result is printed.
 
 	<div class="header">
 		<h2>PageRank</h2>
+	</div>
+
+	<h2 class="header">Resilient Distributed Datasets (RDDs)</h2>
+
+	<div class="section">
+		<p>
+			As mentioned before, Spark is implemented on top of RDDs. These RDDs are key to understanding how Spark is able
+			to claim more efficient memory management while still performing as well as the other big distributed systems.
+			The basic idea is that RDDs keep track of coarse-grained transformations that have been applied to it, rather
+			than fine-grained operations to its shared state. That is to say, a fine-grained operation would involve updating
+			specific cells in a shared table, which would involve propagating this change across all other nodes that use it
+			so that it can be recovered in the event of failure. A coarse-grained approach involves using one operation to
+			update most, if not all, elements. This allows the driver to simply keep track of all transformations utilized
+			over time, allowing an RDD to easily rebuild from failure by checking other RDDs. In spite of this potential 
+			loss of generality, RDDs are still very powerful and flexible enough to handle the majority of parallelizable 
+			computations.
+		</p>
+		<p>
+			Formally speaking, an RDD is actually immutable - any modifications to an RDD are actually a result of a
+			transformation creating a new RDD after running a function through a group of elements in the old one. In fact,
+			RDDs may not even need to stay in memory. It keeps track of how it was derived from other data through the
+			aforementioned transformations, known as its <b>lineage</b>, and is able to compute specific partitions of itself
+			on the fly. The user can also specify which RDDs may be queried more often, and therefore should be stored in
+			memory instead of being represented as a series of transformations. This is known as <b>persistence</b>, which
+			greatly speeds up execution if a user knows beforehand that a certain dataset will be referenced multiple times.
+			An RDD can also be <b>partitioned</b> across multiple machines, which is another aspect of RDDs that can be set by
+			the user.
+		</p>
+		<h3>RDD Operations</h3>
+		<p>
+			There are two kinds of operations one can perform on RDDs. The first is a <b>transformation</b>, which modifies
+			an existing dataset, and the second is an <b>action</b>, which will compute a value from a dataset and return 
+			it to the driver program. The classic transformation and action example would be <code>map</code> and 
+			<code>reduce</code>: <code>map</code> takes a function and applies it to every element in a dataset, which is how 
+			a transformation works. <code>reduce</code> takes a dataset and aggregates it through a function - this is 
+			analogous to how an action operates and passes its value on to the driver program.
+		</p>
+		<p>
+			Transformations in Spark are <b>lazy</b>, which means that the dataset is not modified by the transformations
+			immediately. The transformation sequence is saved and only applied when an action requests the value for the
+			driver program.
+		</p>
+		
+		<h3>RDD Advantages</h3>
+		<p>
+			<img src="rddVSdsm.png" alt="Table 1" style="width:450px;height:350px">
+		</p>
+		<p>
+			Table 1 lists out a quick summary of how an RDD-based system stacks up with a generic Distributed Shared Memory 
+			(DSM) system. Most importantly, it shows how the fault tolerance of RDDs can be so much more efficient than that 
+			of a DSM by using lineage to track its RDDs. This prevents the necessity of periodic checkpoints and required 
+			full-system rollbacks when critical nodes fail, which are typical fault recovery methods for DSMs. In addition,
+			RDDs are capable of running extra copies of slow tasks, similar to how MapReduce deals with stragglers. In DSM, 
+			two copies of the same task would be accessing the same memory locations, creating contention and potential data
+			inconsistencies across the board.
+		</p>
+		<p>
+			Though RDDs can be generalized to address a wide range of parallelized problems, it is also because most distributed
+			systems today follow a MapReduce-type of framework, in which one function is applied over a large batch of elements.
+			In the event that fine grained updates are required, RDDs would no longer be a practical choice. An example of such 
+			include a storage system over multiple users for a web app, in which it would not be practical to assume that every 
+			user would enjoy having the contents of their storage modified to match everyone else's.
+		</p>
 	</div>
 
 	<div class="header">
