@@ -348,14 +348,31 @@ Finally, the map and reduce algorithms are applied, and the result is printed.
 		</p>
 		<p>
 			This graph depicts the time difference between the initial iteration of each system and the average of subsequent 
-			iterations thereafter.
+			iterations thereafter. We see that Spark consistently outperformed both versions of Hadoop in both algorithms. In
+			the case of HadoopBM, it incurred a significant overhead cost just to convert the text input into binary format, 
+			but subsequent iterations show it outperforming Hadoop on average. However, neither Hadoop versions were able to 
+			keep up with Spark once the initial overhead of reading in the data was completed.
 		</p>
 		<p>
 			<img src="clusterSize.png" alt="Cluster Size Comparisons" style="width:450px;height:250px">
 		</p>
 		<p>
 			This graph only shows the average running time of the subsequent iterations, but compares the performance of each
-			one over the different numbers of machines used.
+			one over the different numbers of machines used. Again, we see that Spark greatly outperforms Hadoop and HadoopBM
+			by a factor of over 20x on the logistic regression. The margin is not as great on the k-means algorithm, which is
+			more influenced by computations, but it is still significant.
+		</p>
+		<p>
+			The researchers investigated several factors that may have contributed to Hadoop being so much slower than Spark.
+			They looked at possible overhead from the Hadoop software stack, overhead of HDFS when serving data, and the 
+			deserialization overhead cost to convert binary into in-memory Java objects (in the case of HadoopBM). By running
+			simple no-op commands on Hadoop, they found that these jobs still incurred about 25s of overhead involving setup,
+			starting up tasks, and cleanup. They also found that HDFS would run checksums and copy into memory multiple times
+			when serving data. For the final point, they compared reading either text or binary data from in-memory HDFS, 
+			then compared the results to reading text or binary data from an in-memory file. The results showed that parsing
+			binary input was about 7 seconds faster than parsing text input. However, both of the results still ran slower
+			than an RDD that was directly stored in memory as a Java object, which is how Spark is able to avoid these 
+			overhead costs and outperform Hadoop for these algorithms that only require coarse-grained transformations.
 		</p>
 		<h3>Fault Recovery Evaluation</h3>
 		<p>
