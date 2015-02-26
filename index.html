@@ -237,10 +237,10 @@ Finally, the map and reduce algorithms are applied, and the result is printed.
 			than fine-grained operations to its shared state. That is to say, a fine-grained operation would involve updating
 			specific cells in a shared table, which would involve propagating this change across all other nodes that use it
 			so that it can be recovered in the event of failure. A coarse-grained approach involves using one operation to
-			update most, if not all, elements. This allows the driver to simply keep track of all transformations utilized
-			over time, allowing an RDD to easily rebuild from failure by checking other RDDs. In spite of this potential 
-			loss of generality, RDDs are still very powerful and flexible enough to handle the majority of parallelizable 
-			computations.
+			update most, if not all, elements. This allows the driver to simply keep track of all transformations on an RDD
+			over time, allowing an RDD to easily rebuild from failure by utilizing other RDDs. This fault recovery process, 
+			involving the RDD's lineage, will be discussed in greater detail shortly. In spite of this potential loss of 
+			generality, RDDs are powerful and flexible enough to handle the majority of parallelizable computations.
 		</p>
 		<p>
 			Formally speaking, an RDD is actually immutable - any modifications to an RDD are actually a result of a
@@ -258,10 +258,12 @@ Finally, the map and reduce algorithms are applied, and the result is printed.
 		<p>
 			There are two kinds of operations one can perform on RDDs. The first is a <b>transformation</b>, which modifies
 			an existing dataset, and the second is an <b>action</b>, which will compute a value from a dataset and return 
-			it to the driver program. The classic transformation and action example would be <code>map</code> and 
-			<code>reduce</code>: <code>map</code> takes a function and applies it to every element in a dataset, which is how 
-			a transformation works. <code>reduce</code> takes a dataset and aggregates it through a function - this is 
-			analogous to how an action operates and passes its value on to the driver program.
+			it to the driver program. An action will first load up the relevant partitions of the RDD into memory before
+			processing it - this means that RDDs are not normally stored in memory until needed, which greatly reduces the 
+			amount of RAM needed to process large datasets efficiently. The classic transformation and action example would 
+			be <code>map</code> and <code>reduce</code>: <code>map</code> takes a function and applies it to every element in 
+			a dataset, which is how a transformation works. <code>reduce</code> takes a dataset and aggregates it through a 
+			function - this is analogous to how an action operates and passes its value on to the driver program.
 		</p>
 		<p>
 			Transformations in Spark are <b>lazy</b>, which means that the dataset is not modified by the transformations
@@ -328,10 +330,10 @@ Finally, the map and reduce algorithms are applied, and the result is printed.
 	<div class="section">
 		<p>
 			RDDs were first proposed in a paper published by UC Berkeley. There, they describe how they implements these 
-			resilient datasets on top of Spark, which have now become an integral part of Spark itself. The researchers were 
-			also able to show that Spark can run up to 20 times faster than Hadoop for certain iterative applications, and can 
-			scan a 1 TB dataset wth only 5 - 7 seconds of latency. Fault recovery was noticeably efficient, as Spark is able to
-			recover just by building the failed partitions. Specific examples are as follow:
+			resilient datasets (which have now become an integral part of Spark itself). The researchers were also able to show 
+			that Spark can run up to 20 times faster than Hadoop for certain iterative applications, and can scan a 1 TB 
+			dataset wth only 5 - 7 seconds of latency. Fault recovery was noticeably efficient, as Spark is able to recover 
+			just by building the failed partitions. Specific examples are as follow:
 		</p>
 		<h3>Iterative Machine Learning Algorithm Evaluation</h3>
 		<p>
