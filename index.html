@@ -53,10 +53,9 @@
 		</p>
 	</div>
 
-	<h2 class="header">Setup</h2>
-
-	<div class="section">
-		<p>
+<h2 class="header">Setup</h2>
+<div class="section">
+<p>
 There are two basic ways to set up a Spark environment: pre-built or source code.
 </p>
 <p>
@@ -90,7 +89,200 @@ Spark build is best when using scala 2.10.X<br />
 The latest scala will cause complications and may not build.<br />
 Also, building Spark requires Maven and Java.
 </p>
-	</div>
+</div>
+<h2 class="header">A Little About Spark Map, Reduce, and Filter</h2>
+<div class="section">
+<p>
+<i>Spark supports Python, Java, and Scala. But we will be using Scala throughout our tutorial. </i>
+</p>
+<h3>Introduction</h3>
+<p>
+Spark's map, reduce, and filter functions operate similarly to Scala's closure, or also to pattern matching. Essentially, these functions take an input, map a variable to the input, and apply the variable in a meaningful way. We will see many demonstrations of this throughout the tutorial. 
+</p>
+<p>
+More specifically, these functions operate on every element of a dataset, then match the individual elements to a pattern, and operate on the match. For example, if we have a dataset K where each element is a string, then a filter function may look like 
+<pre><code> K.filter(_.startWith("Error"))</code></pre>
+The "_" is a pattern that matches any element, which is a string in this case, and the operation is to filter only the strings that startWith "Error".
+</p>
+<p>
+We should also describe Scala's closure (function) syntax. It looks like 
+<pre><code>(parameter) => predicate</code></pre>
+Where predicate determines the algorithm to be performed on the inputs. This is a very powerful and expressive feature when combined with pattern matching. Scala closures are the building blocks of Spark's map, reduce, and filter functions, so we will demonstrate them throughout the tutorial.
+</p>
+<p>
+Keep in mind that map, reduce, and filter are transformations, so they will need an action to generate a logical output.
+</p>
+<h3>Filter</h3>
+<p>
+Spark's filter function takes a closure function as its input, applies it to elements of a dataset and returns a dataset where the elements returned true. 
+</p>
+<h3>Map</h3>
+<p>
+Map maps each element in the dataset to the return of the closure.
+</p>
+<h3>Reduce</h3>
+<p>
+Reduce is an action rather than a transformation. It functions similarly to normal MapReduce function where it aggregates the elements using a given closure.
+</p>
+<h2 class="header">Spark Shell And WordCount</h2>
+<div class="section">
+<h3>Shell</h3>
+<p>
+To start the shell, enter
+<pre><code>./bin/spark-shell</code></pre>
+When you see the scala shell, you've succeeded
+//INSERT IMAGE HERE
+</p>
+<p>
+Next we will load a text file 
+<pre><code>scala> val textFile = sc.textFile("README.md")</code></pre>
+For this example, we'll use Spark's own readme file.
+</p>
+<p>
+Let's filter out the lines with the word Spark in it
+<pre><code>scala> val linesWithSpark = textFile.filter(line => line.contains("Spark"))</code></pre>
+Here we can see that an element in a text file is a line. And the filter matches each line in the text to the identifier "line", and runs the boolean function contains to return only the lines containing the word Spark.
+</p>
+<p>
+We can also cache our data for example
+<pre><code>scala> linesWithSpark.cache()</code></pre>
+And then run a count action to see how many lines contained the word "Spark"
+<pre><code>scala> linesWithSpark.count()</code></pre>
+You can even chain functions together
+<pre><code>scala> val linesWithSpark = textFile.filter(line => line.contains("Spark"))</code></pre>
+Now that we are familiar with the shell, let's look at how we can count the number of occurances of each word in a file.
+</p>
+<h3>WordCounts</h3>
+<p>
+Take the text file like before
+<pre><code>scala> val textFile = sc.textFile("README.md")</code></pre>
+And now perform wordcount
+<pre><code>scala> val wordCounts = textFile.flatMap(line => line.split(" ")).map(word => (word, 1)).reduceByKey((a, b) => a + b)</code></pre>
+FlatMap is the same as map except each key is mapped to zero or more output items. In this case, each line is mapped to a list of words split by space.<br /><br />
+Map will take each line as a dataset, match each word to the identifier word. Then map each word to a value 1.<br /><br />
+And finally, reduceByKey will take a pair of words that match, since the words are the keys, and aggregate their value. In more details, the reduceByKey function will find elements with matching keys, in this case matching words, and match their values to the pattern of a pair (a, b). Which means that it will take only 2 matching words, and then add these values, aggregating to the same key(word). ReduceByKey is a transformation. And in this case, it will return the a dataset of key(word) paird with the value (sum).
+</p>
+<p>
+And because reduceByKey is a transformation, you need to get the values of the dataset with collect
+<pre><code>scala> wordCounts.collect()</code></pre>
+</p>
+</div>
+<h2 class="header">App Deployment and PiEstimator</h2>
+<div class="section">
+<h3 class="header">App Deployment</h3>
+<p>
+Now that we know how to use Spark with the shell, it's useful to look at a way to deploy a Spark application which can be reused. We will use Spark's "SimpleApp" to demonstrate.
+</p>
+<p>
+<pre><code>
+/* SimpleApp.scala */
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkContext._
+import org.apache.spark.SparkConf
+
+object SimpleApp {
+  def main(args: Array[String]) {
+    val logFile = "README.md" // Should be some file on your system
+    val conf = new SparkConf().setAppName("Simple Application")
+    val sc = new SparkContext(conf)
+    val logData = sc.textFile(logFile, 2).cache()
+    val numAs = logData.filter(line => line.contains("a")).count()
+    val numBs = logData.filter(line => line.contains("b")).count()
+    println("Lines with a: %s, Lines with b: %s".format(numAs, numBs))
+  }
+}
+</code></pre>
+</p>
+<p>
+Diving into the SimpleApp.scala code, the conf and sc variables are the configuration and the spark context, respectively. The Spark context is the object to use to perform Spark functions.
+</p>
+<p>
+Next, we see two filter functions, to count the number of As and the number of Bs. To do this, the dataset is the file with lines as the elements. For each element, filter will match the entire element(line) to the identifier(line). Then, a boolean function "contains()" is applied to return only lines with As or Bs. This new dataset is then applied to the "count()" action, which counts the number of elements in the set, which is the number of lines containing As and Bs respectively. 
+</p>
+<p>
+SparkConf is a configuration requirement to make sure that the application will be using Spark. To create the sbt configuration file, simple.sbt, use the following:
+</p>
+<p>
+<pre><code>
+name := "Simple Project"
+
+version := "1.0"
+
+scalaVersion := "2.10.4"
+
+libraryDependencies += "org.apache.spark" %% "spark-core" % "1.2.0"
+</code></pre>
+</p>
+<p>
+Finally, the following steps will deploy and run the application.<br />
+<pre><code>
+# Your directory layout should look like this
+$ find .
+.
+./simple.sbt
+./src
+./src/main
+./src/main/scala
+./src/main/scala/SimpleApp.scala
+
+# Package a jar containing your application
+$ sbt package
+...
+[info] Packaging {..}/{..}/target/scala-2.10/simple-project_2.10-1.0.jar
+
+# Use spark-submit to run your application
+$ YOUR_SPARK_HOME/bin/spark-submit \
+  --class "SimpleApp" \
+  --master local[4] \
+  target/scala-2.10/simple-project_2.10-1.0.jar
+...
+Lines with a: 46, Lines with b: 23
+</code></pre>
+</p>
+
+<h3>Pi Estimator</h3>
+<p>
+Spark comes with a sample pi estimator to demonstrate and to test your Spark environment.
+</p>
+<p>
+This Pi Estimator algorithm intuitively imagines a unit circle in a unit square from 0 to 1, [(0,0) ... (1,1)]. It randomly picks points in the unit square. The probability of landing a point in the circle is pi/4. So it picks random x and y coordinates, if the point is within the circle, then return 1. We will examine the mapreduce code after the code.
+</p>
+<pre><code>
+package org.apache.spark.examples
+import scala.math.random
+import org.apache.spark._
+
+object SparkPi {
+def main(args: Array[String]) {
+val conf = new SparkConf().setAppName("Spark Pi")
+val spark = new SparkContext(conf)
+val slices = if (args.length > 0) args(0).toInt else 2
+val n = math.min(100000L * slices, Int.MaxValue).toInt // avoid overflow
+val count = spark.parallelize(1 until n, slices).map { i =>
+val x = random * 2 - 1
+val y = random * 2 - 1
+if (x*x + y*y < 1) 1 else 0
+}.reduce(_ + _)
+println("Pi is roughly " + 4.0 * count / n)
+spark.stop()
+}
+}
+</code></pre>
+</p>
+<p>
+<b>How MapReduce Worked</b><br />
+Going through the code line by line, we see the slices variable which controls how many points we will generate to estimate Pi. The n variable uses slice for exactly this purpose.<br /><br />
+Next, we see the <i>parallelize</i> function, which distributes the dataset found in its first argument, which is a sequence from 1 to n, and distribute it to slices number of instances for cluster computation.<br /><br />
+Now that we have a sequence of numbers as the dataset, each element is a number. The <i>map</i> function maps each number to the identifier i as the key. And for each i, it generates a point with x and y, then compute whether or not it falls in the unit circle. If so, it gives the key a value 1, else 0. <br /><br />
+And finally, the <i>reduce</i> function aggregates every key/value pair, which currently is the iteration number as the key and whether or not it fell within the unit circle as the value. The pattern _+_ takes two key/value pair, and matches each value to a _. Then the addition operation is performed, and the aggregate is returned by the reduce action as a value.
+</p>
+<p>
+From this example, you can see that Spark supports standard library imports. This is also true for Java. For this Pi Estimator, the math library has been imported.
+</p>
+<p>
+You can get a list of actions and transformations in the API or find the most frequently used actions and transformations in the programming guide <a href="http://spark.apache.org/docs/1.2.0/programming-guide.html">here</a>.
+</p>
+</div>
 
 	
 
