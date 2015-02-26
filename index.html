@@ -253,6 +253,7 @@ Finally, the map and reduce algorithms are applied, and the result is printed.
 			An RDD can also be <b>partitioned</b> across multiple machines, which is another aspect of RDDs that can be set by
 			the user.
 		</p>
+
 		<h3>RDD Operations</h3>
 		<p>
 			There are two kinds of operations one can perform on RDDs. The first is a <b>transformation</b>, which modifies
@@ -265,7 +266,33 @@ Finally, the map and reduce algorithms are applied, and the result is printed.
 		<p>
 			Transformations in Spark are <b>lazy</b>, which means that the dataset is not modified by the transformations
 			immediately. The transformation sequence is saved and only applied when an action requests the value for the
-			driver program.
+			driver program. Additionally, in the event of failure, an RDD is able to recover lost data by checking its
+			transformation history, efficiently restoring itself without relying on a previous checkpoint and rolling back any
+			progress made in the process.
+		</p>
+		
+		<h3>RDD Lineage and Operations Example</h3>
+		<p>
+			<img src="lineage.png" alt="Lineage DAG" style="width:400px;height:250px">
+		</p>
+		<p>
+			To get a better sense of how lineage works, consider this example. A user needs to go through 1 TB of log files
+			to search for instances of a specific error. He can define an RDD from this data that is on disk, making sure not
+			to load up 1 TB of memory onto RAM. This leads to the first RDD, <code>lines</code>. From there, the user
+			creates a new RDD <code>errors</code> by executing a transformation, as shown by the first transformation in this 
+			lineage. This filters out all of the log messages that start with the string "ERROR". Note that because the 
+			transformations are lazy, the clusters will not actually go through and do any work when the transformation has 
+			been requested. The <code>errors</code> RDD's lineage simply states that it was derived from the base RDD 
+			<code>lines</code> in the manner listed, and will compute the necessary sections when requested by an action.
+			In this case, because the user would like to quickly query <code>errors</code> and any RDDs that may be derived 
+			from <code>errors</code>, the user can run a <code>.count()</code> action on the RDD. This is an action that will
+			go through all of the elements in <code>errors</code>, loading everything onto memory. From there, the user goes on
+			to craft a second filter transformation, looking for all of the error messages that involve the HDFS in some way.
+		</p>
+		<p>
+			Looking at this graph, we can see how an RDD is able to efficiently recover from failures, as it does not need to
+			periodically store multiple copies of itself over the different nodes. Instead, it simply refers back to its base 
+			RDD, then follows its lineage of transformations until it reaches the state that it was in before the failure.
 		</p>
 		
 		<h3>RDD Advantages</h3>
@@ -276,7 +303,11 @@ Finally, the map and reduce algorithms are applied, and the result is printed.
 			Table 1 lists out a quick summary of how an RDD-based system stacks up with a generic Distributed Shared Memory 
 			(DSM) system. Most importantly, it shows how the fault tolerance of RDDs can be so much more efficient than that 
 			of a DSM by using lineage to track its RDDs. This prevents the necessity of periodic checkpoints and required 
-			full-system rollbacks when critical nodes fail, which are typical fault recovery methods for DSMs. In addition,
+			full-system rollbacks when critical nodes fail, which are typical fault recovery methods for DSMs.
+
+			<!-- Prof Kim really wants to highlight the fault recovery!!!! -->
+
+			In addition,
 			RDDs are capable of running extra copies of slow tasks, similar to how MapReduce deals with stragglers. In DSM, 
 			two copies of the same task would be accessing the same memory locations, creating contention and potential data
 			inconsistencies across the board.
@@ -285,7 +316,7 @@ Finally, the map and reduce algorithms are applied, and the result is printed.
 			Though RDDs can be generalized to address a wide range of parallelized problems, it is also because most distributed
 			systems today follow a MapReduce-type of framework, in which one function is applied over a large batch of elements.
 			In the event that fine grained updates are required, RDDs would no longer be a practical choice. An example of such 
-			include a storage system over multiple users for a web app, in which it would not be practical to assume that every 
+			includes a storage system over multiple users for a web app, in which it would not be practical to assume that every 
 			user would enjoy having the contents of their storage modified to match everyone else's.
 		</p>
 	</div>
